@@ -3,6 +3,7 @@ import Home from "@/pages/Home";
 import Loading from "@/pages/Loading";
 import Result from "@/pages/Result";
 import Guide from "@/pages/Guide";
+import Profile from "@/pages/Profile";
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
         <Route path="/generating" element={<Loading />} />
         <Route path="/result" element={<Result />} />
         <Route path="/guide" element={<Guide />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </Router>
   );

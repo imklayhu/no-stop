@@ -24,9 +24,18 @@ model Route {
   id        String   @id @default(uuid()) @db.Uuid
   userId    String?  @map("user_id") @db.Uuid
   user      User?    @relation(fields: [userId], references: [id])
-  metaData  Json     @map("meta_data")
-  pathData  Json     @map("path_data")
-  guideText String?  @map("guide_text")
+  
+  // 核心业务字段
+  title     String?  @default("城市绕圈训练") // 路线标题
+  distance  Float    // 总距离 (km)
+  score     Float    // 评分 (0-100)
+  
+  // 详情数据 (JSONB)
+  metaData  Json     @map("meta_data") // 包含红绿灯、转弯等详细指标
+  pathData  Json     @map("path_data") // 包含路线坐标点、步骤等大字段
+  
+  guideText String?  @map("guide_text") // LLM 生成的路书点评
+  
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("routes")

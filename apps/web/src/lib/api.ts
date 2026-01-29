@@ -12,6 +12,7 @@ export interface BaiduRoute {
   duration: number;
   originLocation: { lng: number; lat: number };
   destinationLocation: { lng: number; lat: number };
+  trafficCondition?: string; // 新增字段
 }
 
 export interface BaiduResult {

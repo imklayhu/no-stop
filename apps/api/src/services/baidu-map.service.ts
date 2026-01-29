@@ -24,85 +24,92 @@ export class BaiduMapService {
 
   /**
    * 生成闭环骑行路线 (MVP: 折返模式 A -> B -> A)
+   * 生成3条不同方向的候选路线
    * @param origin 起点坐标 (lat,lng)
    * @param distanceKm 目标总距离 (km)
    */
   async generateCircuitRoute(origin: string, distanceKm: number = 30) {
-    // 1. 计算折返点坐标
-    // 简单算法：在随机方向或固定方向上，距离 D/2 处找一点
-    // 百度坐标系假设近似为平面或简单球面，经纬度转换需注意
-    // 1度纬度 ≈ 111km，1度经度 ≈ 111km * cos(lat)
-    
     const [latStr, lngStr] = origin.split(',');
     const lat = parseFloat(latStr);
     const lng = parseFloat(lngStr);
-    
     const halfDistKm = distanceKm / 2;
-    
-    // 随机方位角 (0-360)
-    // 为了MVP稳定性，暂时固定向北或东北，避免算到海里或非法区域（后续需结合地图边界检查）
-    // 或者随机生成几个方向尝试
-    const bearing = Math.random() * 360; 
-    
-    // 计算目标点坐标 (简易 Haversine 逆向)
     const R = 6371; // 地球半径 km
-    const d = halfDistKm;
-    
-    const lat1 = lat * Math.PI / 180;
-    const lng1 = lng * Math.PI / 180;
-    const brng = bearing * Math.PI / 180;
 
-    const lat2 = Math.asin(Math.sin(lat1) * Math.cos(d/R) + Math.cos(lat1) * Math.sin(d/R) * Math.cos(brng));
-    const lng2 = lng1 + Math.atan2(Math.sin(brng) * Math.sin(d/R) * Math.cos(lat1), Math.cos(d/R) - Math.sin(lat1) * Math.sin(lat2));
+    // 生成3个方向：随机起始角，间隔120度
+    const startBearing = Math.random() * 360;
+    const bearings = [startBearing, startBearing + 120, startBearing + 240].map(b => b % 360);
 
-    const destLat = lat2 * 180 / Math.PI;
-    const destLng = lng2 * 180 / Math.PI;
-    const destStr = `${destLat.toFixed(6)},${destLng.toFixed(6)}`;
+    const routePromises = bearings.map(async (bearing) => {
+      try {
+        // 1. 计算目标点坐标
+        const lat1 = lat * Math.PI / 180;
+        const lng1 = lng * Math.PI / 180;
+        const brng = bearing * Math.PI / 180;
+        const d = halfDistKm;
 
-    this.logger.log(`Generating circuit: ${origin} -> ${destStr} -> ${origin} (Approx ${distanceKm}km)`);
+        const lat2 = Math.asin(Math.sin(lat1) * Math.cos(d/R) + Math.cos(lat1) * Math.sin(d/R) * Math.cos(brng));
+        const lng2 = lng1 + Math.atan2(Math.sin(brng) * Math.sin(d/R) * Math.cos(lat1), Math.cos(d/R) - Math.sin(lat1) * Math.sin(lat2));
 
-    // 2. 分别规划 A->B 和 B->A
-    const [routeAB, routeBA] = await Promise.all([
-      this.getRidingRoute(origin, destStr),
-      this.getRidingRoute(destStr, origin)
-    ]);
+        const destLat = lat2 * 180 / Math.PI;
+        const destLng = lng2 * 180 / Math.PI;
+        const destStr = `${destLat.toFixed(6)},${destLng.toFixed(6)}`;
 
-    // 3. 合并路线数据
-    // 百度 API result 结构: { routes: [ { distance: number, duration: number, steps: [] } ] }
-    if (!routeAB?.routes?.[0] || !routeBA?.routes?.[0]) {
-      throw new Error('Failed to plan circuit route segment');
+        this.logger.log(`Generating candidate circuit: ${origin} -> ${destStr} -> ${origin} (Bearing: ${bearing.toFixed(0)})`);
+
+        // 2. 分别规划 A->B 和 B->A
+        const [routeAB, routeBA] = await Promise.all([
+          this.getRidingRoute(origin, destStr),
+          this.getRidingRoute(destStr, origin)
+        ]);
+
+        if (!routeAB?.routes?.[0] || !routeBA?.routes?.[0]) {
+          return null;
+        }
+
+        const leg1 = routeAB.routes[0];
+        const leg2 = routeBA.routes[0];
+
+        // 3. 合并路线数据
+        const mergedSteps = [...(leg1.steps || []), ...(leg2.steps || [])];
+        const totalDistance = leg1.distance + leg2.distance;
+        const totalDuration = leg1.duration + leg2.duration;
+
+        // 4. 获取路况评估与红绿灯数据 (通过驾车API辅助)
+        const trafficData = await this.getTrafficStatus(origin, destStr);
+
+        return {
+          distance: totalDistance,
+          duration: totalDuration,
+          steps: mergedSteps,
+          originLocation: routeAB.origin,
+          destinationLocation: routeBA.destination,
+          trafficCondition: trafficData.condition,
+          trafficLightCount: trafficData.lightCount // 新增：红绿灯数量（辅助）
+        };
+      } catch (e) {
+        this.logger.error(`Failed to generate route for bearing ${bearing}`, e);
+        return null;
+      }
+    });
+
+    const results = await Promise.all(routePromises);
+    const validRoutes = results.filter(r => r !== null);
+
+    if (validRoutes.length === 0) {
+      throw new Error('Failed to generate any valid circuit routes');
     }
 
-    const leg1 = routeAB.routes[0];
-    const leg2 = routeBA.routes[0];
-
-    // 合并 steps
-    // 注意：B->A 的起点 B 可能与 A->B 的终点 B 坐标微小差异，直接拼接 steps 即可
-    const mergedSteps = [...(leg1.steps || []), ...(leg2.steps || [])];
-    const totalDistance = leg1.distance + leg2.distance;
-    const totalDuration = leg1.duration + leg2.duration;
-
-    // 4. 获取路况评估 (通过驾车API辅助)
-    const trafficCondition = await this.getTrafficStatus(origin, destStr);
-
     return {
-      routes: [{
-        distance: totalDistance,
-        duration: totalDuration,
-        steps: mergedSteps,
-        originLocation: routeAB.origin,
-        destinationLocation: routeBA.destination, // 应该是 A
-        trafficCondition // 添加路况字段
-      }]
+      routes: validRoutes
     };
   }
 
   /**
-   * 获取路况状态 (通过驾车API获取拥堵评估)
+   * 获取路况状态与红绿灯信息 (通过驾车API辅助)
    * @param origin 起点
    * @param destination 终点
    */
-  async getTrafficStatus(origin: string, destination: string): Promise<string> {
+  async getTrafficStatus(origin: string, destination: string): Promise<{ condition: string; lightCount: number }> {
     try {
       const url = `${this.baseUrl}/direction/v2/driving`;
       const params = {
@@ -115,31 +122,29 @@ export class BaiduMapService {
       const { data } = await firstValueFrom(this.httpService.get(url, { params }));
       
       if (data.status !== 0 || !data.result?.routes?.[0]) {
-        this.logger.warn('Failed to fetch driving traffic data, using default');
-        return '未知';
+        return { condition: '未知', lightCount: 0 };
       }
 
-      // 简单评估：根据拥堵距离或标签判断
-      // 真实API返回的 traffic_condition 可能是一个数组，包含 geo_cnt 和 status (0:未知, 1:畅通, 2:缓行, 3:拥堵, 4:严重拥堵)
-      // 这里做简化处理：如果包含 status >= 3 的路段超过一定比例，则认为拥堵
-      
-      // 注意：具体字段需参照百度文档，这里假设一种常见的结构或仅使用 duration 对比
-      // 如果没有 traffic_condition 字段，可以对比 duration 和 distance (假设平均车速)
-      
       const route = data.result.routes[0];
-      // 假设：如果平均车速 < 20km/h (5.5m/s) 且距离 > 1km，认为拥堵 (城市路况)
-      const speed = route.distance / route.duration; // m/s
       
+      // 1. 提取红绿灯数量 (百度驾车API result.routes[0].traffic_light_cnt)
+      // 注意：这是单程 A->B 的红绿灯，往返大致 x2
+      const oneWayLights = route.traffic_light_cnt || 0;
+      const lightCount = oneWayLights * 2;
+
+      // 2. 评估路况
+      const speed = route.distance / route.duration; // m/s
+      let condition = '畅通';
       if (speed < 5.5) {
-        return '拥堵';
-      } else if (speed < 8.3) { // < 30km/h
-        return '缓行';
-      } else {
-        return '畅通';
+        condition = '拥堵';
+      } else if (speed < 8.3) {
+        condition = '缓行';
       }
+
+      return { condition, lightCount };
     } catch (error: any) {
       this.logger.error(`Error fetching traffic status: ${error.message}`);
-      return '未知';
+      return { condition: '未知', lightCount: 0 };
     }
   }
 

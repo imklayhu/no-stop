@@ -43,6 +43,12 @@ export default function Home() {
             </div>
             <h1 className="text-2xl font-extrabold tracking-tight">{appName}</h1>
           </div>
+          <button 
+            onClick={() => navigate("/profile")}
+            className="w-10 h-10 bg-brand-dark rounded-full flex items-center justify-center border border-white/5 hover:bg-brand-dark/80 transition-colors"
+          >
+            <span className="material-icons-round text-brand-gray">person</span>
+          </button>
         </header>
 
         <main className="flex-1 px-6 space-y-6 overflow-y-auto pb-8 z-10">
@@ -94,20 +100,18 @@ export default function Home() {
 
           <section className="space-y-3">
             <h2 className="text-sm font-semibold text-brand-gray px-1">训练类型</h2>
-            <div 
-              className="space-y-3 cursor-pointer" 
-              onClick={handleGenerateRoute}
-            >
-              <div className="bg-brand-dark/50 p-4 rounded-3xl border-2 border-brand-accent flex items-center justify-between relative overflow-hidden hover:bg-brand-dark/70 transition-colors group">
+            <div className="space-y-3">
+              {/* 选中状态的城市绕圈卡片 */}
+              <div className="bg-brand-dark/50 p-4 rounded-3xl border-2 border-brand-accent flex items-center justify-between relative overflow-hidden transition-colors group cursor-default">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-brand-black rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                     <span className="material-icons-round text-brand-accent">loop</span>
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-lg">城市绕圈 (点击生成)</h3>
+                      <h3 className="font-bold text-lg">城市绕圈</h3>
                       <span className="bg-brand-accent px-1.5 py-0.5 rounded text-[10px] font-bold text-brand-black uppercase">
-                        推荐
+                        已选
                       </span>
                     </div>
                     <p className="text-xs text-brand-gray mt-0.5">
@@ -115,11 +119,12 @@ export default function Home() {
                     </p>
                   </div>
                 </div>
-                <div className="w-6 h-6 border-2 border-brand-accent rounded-full flex items-center justify-center">
-                  <div className="w-3 h-3 bg-brand-accent rounded-full"></div>
+                <div className="w-6 h-6 border-2 border-brand-accent bg-brand-accent rounded-full flex items-center justify-center">
+                  <span className="material-icons text-brand-black text-sm font-bold">check</span>
                 </div>
               </div>
 
+              {/* 禁用的爬坡训练卡片 */}
               <div className="bg-brand-dark p-4 rounded-3xl border border-white/5 flex items-center justify-between opacity-60">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-brand-dark rounded-2xl flex items-center justify-center">
@@ -142,7 +147,7 @@ export default function Home() {
             <span className="material-icons-round text-brand-gray">mic</span>
           </div>
           <button
-            onClick={() => navigate("/generating")}
+            onClick={handleGenerateRoute}
             className="w-full bg-brand-accent hover:bg-amber-600 text-brand-black py-5 rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-orange-500/30 transition-all active:scale-[0.98]"
           >
             <span className="material-icons-round">bolt</span>
