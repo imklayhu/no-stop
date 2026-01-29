@@ -29,17 +29,6 @@ export class AppController {
       // 但如果 error 是 'Failed to fetch history'，说明是数据库连接或查询抛出了异常。
       // 为了调试，我们先打印具体的 error。
       
-      // MVP: 确保 Mock User 存在
-      // 真实场景不需要这一步，因为 User 应该在登录时创建
-      const mockUserId = '00000000-0000-0000-0000-000000000000';
-      if (userId === mockUserId) {
-        await this.prisma.user.upsert({
-          where: { id: mockUserId },
-          update: {},
-          create: { id: mockUserId, phone: '13800000000' },
-        });
-      }
-
       const routes = await this.prisma.route.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
