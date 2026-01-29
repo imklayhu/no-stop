@@ -1,255 +1,149 @@
-## 1. 架构设计
+# NoStop (不停车) - 技术架构设计文档
+
+## 1. 架构概览
+
+NoStop 采用 **Monorepo** 结构，前后端分离，核心特色是引入 **MCP (Model Context Protocol) Server** 作为连接 LLM 与地图服务的桥梁，实现智能化路线生成。
 
 ```mermaid
 graph TD
-    A[用户浏览器] --> B[React前端应用]
-    B --> C[后端服务]
-    C --> D[Supabase数据库]
-    C --> E[LLM服务]
-    C --> F[地图API服务]
+    User[用户终端 (Web/Mobile)] --> FE[前端应用 (React + Vite)]
+    FE --> API_GW[API 网关 (Nginx/Ingress)]
+    API_GW --> BE[后端服务 (NestJS)]
     
-    subgraph "前端层"
-        B
+    subgraph "后端核心层 (NestJS)"
+        BE --> Controller[RouteController]
+        Controller --> Service[RouteService]
+        Service --> Algo[评分算法引擎]
+        Service --> MCP_Client[MCP Client 模块]
     end
     
-    subgraph "后端层"
-        C
+    subgraph "智能与地图服务层"
+        MCP_Client --> MCP_Server[高德 MCP Server]
+        MCP_Client --> LLM[LLM 服务 (OpenAI/DeepSeek)]
+        MCP_Server --> AMap_API[高德地图开放平台]
     end
     
-    subgraph "数据层"
-        D
-    end
-    
-    subgraph "外部服务"
-        E
-        F
+    subgraph "数据存储层"
+        BE --> DB[(Supabase / PostgreSQL)]
     end
 ```
 
-## 2. 技术栈描述
+## 2. 技术栈详细说明
 
-- **前端**: React@18 + TypeScript@5 + TailwindCSS@3 + Vite
-- **初始化工具**: vite-init
-- **后端**: Node.js@20 + Express@4
-- **数据库**: Supabase (PostgreSQL)
-- **地图服务**: Mapbox GL JS
-- **LLM服务**: OpenAI GPT-3.5-turbo
+| 模块 | 技术选型 | 理由 |
+| :--- | :--- | :--- |
+| **Monorepo** | pnpm workspaces | 统一管理前后端代码，共享类型定义 (`packages/shared`) |
+| **前端** | React 18 + Vite + TailwindCSS | 现代、高效、响应式，易于扩展 |
+| **后端** | NestJS (Node.js) | 结构化强，模块化，TypeScript 原生支持，适合复杂逻辑 |
+| **数据库** | Supabase (PostgreSQL) | 强大的关系型数据库，支持 PostGIS 地理信息扩展 |
+| **地图服务** | **百度地图 (Baidu Map)** | 高德注册受限暂用百度。支持 Web 服务 API（路径规划/搜索）和 JS API。 |
+| **MCP** | MCP SDK | 标准化 LLM 调用工具的方式，解耦 LLM 与具体地图 API |
+| **LLM** | OpenAI / DeepSeek | 用于意图理解和生成自然语言路书点评 |
 
-## 3. 路由定义
+## 3. 核心模块设计
 
-| 路由 | 用途 |
-|------|------|
-| / | 首页，路线生成界面 |
-| /route/:id | 路线详情页，显示地图和路书 |
-| /export | 导出页面，GPX文件下载 |
-| /profile | 用户个人中心（可选） |
+### 3.1 评分算法引擎 (Scoring Engine)
+这不是一个 AI 黑盒，而是一套**确定性算法**。
+*   **输入**：百度地图返回的原始路线数据 (GeoJSON / Steps)。
+*   **处理**：
+    1.  **红绿灯提取**：遍历路线 step，统计 `traffic_lights` 数量。
+    2.  **转弯分析**：计算相邻 step 的角度差，识别 > 160° 的掉头弯 (U-turn) 和 < 45° 的急弯。
+    3.  **连续性计算**：寻找最长的一段无红绿灯、无急弯的距离。
+*   **输出**：`Score` (0-100) 及各项细分指标。
 
-## 4. API定义
+### 3.2 LLM 交互与 Prompt 设计 (Intent Parsing & Guide Generation)
+LLM 主要负责意图理解和最终文案生成，不直接参与路径计算。
 
-### 4.1 路线生成API
-```
-POST /api/route/generate
-```
-
-请求参数：
-| 参数名 | 类型 | 必需 | 描述 |
-|--------|------|------|------|
-| lat | number | true | 起始纬度 |
-| lng | number | true | 起始经度 |
-| distance | number | true | 目标距离(km) |
-| type | string | true | 训练类型(loop) |
-
-响应：
-| 参数名 | 类型 | 描述 |
-|--------|------|------|
-| routes | array | 路线候选列表 |
-| status | string | 处理状态 |
-
-示例：
-```json
+#### 意图解析 Prompt 示例
+```text
+System: You are a cycling route assistant. Extract cycling intent from user input. Return strict JSON.
+Input: "我想在家附近绕圈骑 30 公里，别老停"
+Output: 
 {
-  "lat": 31.2304,
-  "lng": 121.4737,
-  "distance": 30,
-  "type": "loop"
+  "mode": "urban_loop",
+  "distance_km": 30,
+  "stop_tolerance": "very_low",
+  "u_turn_allowed": false,
+  "priority": ["continuity", "safety"]
 }
 ```
 
-### 4.2 路线评分API
-```
-POST /api/route/score
-```
-
-请求参数：
-| 参数名 | 类型 | 必需 | 描述 |
-|--------|------|------|------|
-| route | object | true | 路线GeoJSON数据 |
-
-### 4.3 路书生成API
-```
-POST /api/route/book
+#### 路书生成 Prompt 示例
+```text
+System: Based on the route metrics (30km, 2 traffic lights, 12km straight section), write a brief cycling guide.
+Input: { distance: 30, lights: 2, max_continuous_dist: 12 }
+Output: "这条路线全长 30km，路况极佳，仅有 2 个红绿灯。其中有一段长达 12km 的无干扰直路，非常适合进行功率训练。"
 ```
 
-请求参数：
-| 参数名 | 类型 | 必需 | 描述 |
-|--------|------|------|------|
-| route | object | true | 路线数据和评分结果 |
+### 3.3 MCP Server 集成
+我们不直接在后端写死百度 API 调用，而是封装一个 MCP Server。
+*   **Tool: `generate_cycling_route`**
+    *   参数：`origin` (起点), `destination` (终点), `distance` (可选约束)
+    *   功能：调用百度骑行路径规划接口。
+*   **Tool: `search_poi`**
+    *   参数：`keyword`, `radius`, `center`
+    *   功能：查询沿途补给点。
+*   **LLM 交互模式**：
+    后端 -> LLM: "用户想在上海徐汇滨江骑 30km，请帮我规划。"
+    LLM -> MCP: 调用 `generate_cycling_route` (自动拆解起终点和中间途经点以凑够距离)。
+    MCP -> LLM: 返回路线数据。
+    LLM -> 后端: 返回结构化数据或路书文案。
 
-## 5. 服务器架构
+## 4. 数据模型设计 (Database Schema)
 
-```mermaid
-graph TD
-    A[客户端请求] --> B[API网关]
-    B --> C[认证中间件]
-    C --> D[路线控制器]
-    D --> E[路线服务]
-    E --> F[算法引擎]
-    E --> G[LLM服务]
-    E --> H[地图服务]
-    F --> I[数据库]
-    G --> J[OpenAI API]
-    H --> K[Mapbox API]
-    
-    subgraph "服务器层"
-        B
-        C
-        D
-        E
-        F
-        G
-        H
-    end
-```
+基于 Supabase (PostgreSQL)，核心表结构如下：
 
-## 6. 数据模型
+### 4.1 Users (用户表)
+| 字段 | 类型 | 说明 |
+| :--- | :--- | :--- |
+| id | UUID | 主键 |
+| phone | VARCHAR | 手机号 (MVP可选) |
+| created_at | TIMESTAMP | |
 
-### 6.1 实体关系图
-```mermaid
-erDiagram
-    USER ||--o{ ROUTE : generates
-    ROUTE ||--o{ ROUTE_SEGMENT : contains
-    ROUTE ||--o{ TRAFFIC_LIGHT : has
-    
-    USER {
-        uuid id PK
-        string phone
-        string nickname
-        timestamp created_at
-        int daily_quota
+### 4.2 Routes (路线表)
+| 字段 | 类型 | 说明 |
+| :--- | :--- | :--- |
+| id | UUID | 主键 |
+| user_id | UUID | 关联用户 |
+| **meta_data** | JSONB | 核心指标：`{ distance: 30.5, traffic_lights: 4, u_turns: 0, score: 95 }` |
+| **path_data** | JSONB | 百度原始路径数据 (GeoJSON)，用于前端绘制 |
+| **guide_text** | TEXT | LLM 生成的路书点评 |
+| created_at | TIMESTAMP | |
+
+### 4.3 RouteSegments (路段表 - 可选，用于精细化分析)
+用于存储路线中的关键分段（如“滨江冲刺段”），便于后续分析。
+
+## 5. API 接口定义
+
+### 5.1 生成路线 (异步/同步视性能而定)
+`POST /api/routes/generate`
+*   **Request**:
+    ```json
+    {
+      "origin": "121.47,31.23",
+      "targetDistance": 30, // km
+      "type": "loop"
     }
-    
-    ROUTE {
-        uuid id PK
-        uuid user_id FK
-        float total_distance
-        int score
-        json route_data
-        json route_book
-        timestamp created_at
+    ```
+*   **Response**:
+    ```json
+    {
+      "routes": [
+        {
+          "id": "temp-uuid-1",
+          "score": 98,
+          "metrics": { "lights": 2, "u_turns": 0 },
+          "guide": "这条路线...",
+          "geoJson": { ... }
+        }
+      ]
     }
-    
-    ROUTE_SEGMENT {
-        uuid id PK
-        uuid route_id FK
-        int sequence
-        float start_lat
-        float start_lng
-        float end_lat
-        float end_lng
-        float distance
-        string type
-    }
-    
-    TRAFFIC_LIGHT {
-        uuid id PK
-        uuid route_id FK
-        float lat
-        float lng
-        int sequence
-    }
-```
+    ```
 
-### 6.2 数据定义语言
+### 5.2 导出 GPX
+`GET /api/routes/:id/export`
+*   **Response**: 文件流 (`application/gpx+xml`)
 
-用户表(users)
-```sql
-CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    phone VARCHAR(20) UNIQUE NOT NULL,
-    nickname VARCHAR(50) DEFAULT '骑行者',
-    daily_quota INTEGER DEFAULT 5,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- 创建索引
-CREATE INDEX idx_users_phone ON users(phone);
-CREATE INDEX idx_users_created_at ON users(created_at DESC);
-```
-
-路线表(routes)
-```sql
-CREATE TABLE routes (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id),
-    total_distance FLOAT NOT NULL,
-    score INTEGER NOT NULL CHECK (score >= 0 AND score <= 100),
-    route_data JSONB NOT NULL,
-    route_book JSONB NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- 创建索引
-CREATE INDEX idx_routes_user_id ON routes(user_id);
-CREATE INDEX idx_routes_score ON routes(score DESC);
-CREATE INDEX idx_routes_created_at ON routes(created_at DESC);
-```
-
-路段表(route_segments)
-```sql
-CREATE TABLE route_segments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    route_id UUID REFERENCES routes(id) ON DELETE CASCADE,
-    sequence INTEGER NOT NULL,
-    start_lat FLOAT NOT NULL,
-    start_lng FLOAT NOT NULL,
-    end_lat FLOAT NOT NULL,
-    end_lng FLOAT NOT NULL,
-    distance FLOAT NOT NULL,
-    type VARCHAR(20) DEFAULT 'normal'
-);
-
--- 创建索引
-CREATE INDEX idx_segments_route_id ON route_segments(route_id);
-CREATE INDEX idx_segments_sequence ON route_segments(sequence);
-```
-
-红绿灯表(traffic_lights)
-```sql
-CREATE TABLE traffic_lights (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    route_id UUID REFERENCES routes(id) ON DELETE CASCADE,
-    lat FLOAT NOT NULL,
-    lng FLOAT NOT NULL,
-    sequence INTEGER NOT NULL
-);
-
--- 创建索引
-CREATE INDEX idx_lights_route_id ON traffic_lights(route_id);
-CREATE INDEX idx_lights_sequence ON traffic_lights(sequence);
-```
-
-### 6.3 权限设置
-```sql
--- 匿名用户权限
-GRANT SELECT ON routes TO anon;
-GRANT SELECT ON route_segments TO anon;
-GRANT SELECT ON traffic_lights TO anon;
-
--- 认证用户权限
-GRANT ALL PRIVILEGES ON routes TO authenticated;
-GRANT ALL PRIVILEGES ON route_segments TO authenticated;
-GRANT ALL PRIVILEGES ON traffic_lights TO authenticated;
-GRANT ALL PRIVILEGES ON users TO authenticated;
-```
+## 6. MVP 阶段的取舍
+*   **暂不引入 PostGIS**：MVP 阶段直接存 GeoJSON 字符串，前端负责渲染，后端负责基于 JSON 结构的简单计算，降低数据库运维成本。
+*   **缓存策略**：对于热门起点（如知名公园、地标），可以缓存高分路线，减少 API 调用成本。
