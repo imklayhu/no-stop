@@ -2,10 +2,36 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MobileFrame from "@/components/MobileFrame";
 import { appName } from "@no-stop/shared";
+import { fetchRoute } from "@/lib/api";
 
 export default function Home() {
   const navigate = useNavigate();
   const [distance, setDistance] = useState<number>(30);
+
+  // Hardcoded coordinates for MVP demo (Beijing)
+  // Origin: 西二旗 (approx)
+  // Destination: 闭环模式，不需要显式指定终点，由后端计算折返点
+  const TEST_ORIGIN = "40.056885,116.30815";
+  // const TEST_DESTINATION = "39.915285,116.403857"; // Deprecated for Loop Mode
+
+  const handleGenerateRoute = async () => {
+    navigate("/generating"); // Show loading screen immediately
+    
+    try {
+      // 仅传入起点和距离，触发闭环生成逻辑
+      const data = await fetchRoute(TEST_ORIGIN, undefined, distance);
+      if (data.error) {
+        alert(`Error: ${data.error}`);
+        navigate("/"); // Go back on error
+      } else {
+        navigate("/result", { state: { routeData: data } });
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Failed to connect to server");
+      navigate("/");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-brand-black text-white flex items-center justify-center">
@@ -25,8 +51,8 @@ export default function Home() {
               <div className="flex gap-3">
                 <span className="material-icons-round text-brand-gray">location_on</span>
                 <div>
-                  <p className="text-xs text-brand-gray font-medium">当前起终点</p>
-                  <p className="text-lg font-bold mt-0.5">上海市 · 徐汇滨江</p>
+                  <p className="text-xs text-brand-gray font-medium">当前起终点 (MVP测试)</p>
+                  <p className="text-lg font-bold mt-0.5">北京 · 西二旗 → 天安门</p>
                 </div>
               </div>
               <button className="text-brand-accent font-bold text-sm">修改</button>
@@ -68,15 +94,18 @@ export default function Home() {
 
           <section className="space-y-3">
             <h2 className="text-sm font-semibold text-brand-gray px-1">训练类型</h2>
-            <div className="space-y-3">
-              <div className="bg-brand-dark/50 p-4 rounded-3xl border-2 border-brand-accent flex items-center justify-between relative overflow-hidden">
+            <div 
+              className="space-y-3 cursor-pointer" 
+              onClick={handleGenerateRoute}
+            >
+              <div className="bg-brand-dark/50 p-4 rounded-3xl border-2 border-brand-accent flex items-center justify-between relative overflow-hidden hover:bg-brand-dark/70 transition-colors group">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-brand-black rounded-2xl flex items-center justify-center">
+                  <div className="w-12 h-12 bg-brand-black rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                     <span className="material-icons-round text-brand-accent">loop</span>
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-lg">城市绕圈</h3>
+                      <h3 className="font-bold text-lg">城市绕圈 (点击生成)</h3>
                       <span className="bg-brand-accent px-1.5 py-0.5 rounded text-[10px] font-bold text-brand-black uppercase">
                         推荐
                       </span>

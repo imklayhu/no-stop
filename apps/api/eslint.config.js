@@ -18,6 +18,8 @@ export default tseslint.config(
         tsconfigRootDir
       }
     },
-    rules: {}
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    }
   },
 )
