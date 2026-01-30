@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoStop - Export Confirmation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0F172A',
+                            accent: '#F59E0B',
+                            success: '#10B981',
+                            surface: '#1E293B'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f3f4f6;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+        }
+        .device-frame {
+            width: 375px;
+            height: 812px;
+            background: #0F172A;
+            border: 12px solid #1f2937;
+            border-radius: 40px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .content {
+            height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            background: rgba(0,0,0,0.6); /* Dimmed background */
+        }
+        .map-bg {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url('https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');
+            background-size: cover;
+            background-position: center;
+            z-index: -1;
+        }
+        .card {
+            background: #1E293B;
+            border-radius: 24px;
+            padding: 24px;
+            margin: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            transform: translateY(0);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            from { transform: scale(0.9) translateY(20px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="device-frame">
+        <div class="map-bg"></div>
+        <div class="content">
+            <div class="card mb-8">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-white text-lg font-bold">Export Route</h3>
+                    <button class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+                </div>
+
+                <!-- File Name Input -->
+                <div class="mb-4">
+                    <label class="text-xs text-gray-500 uppercase tracking-wider block mb-2">File Name</label>
+                    <div class="flex items-center bg-black/30 rounded-lg border border-white/10 px-3 py-3">
+                        <i class="fas fa-file-code text-brand-accent mr-3"></i>
+                        <input type="text" value="NoStop_NightLoop_42km.gpx" 
+                               class="bg-transparent text-white text-sm w-full focus:outline-none font-mono">
+                    </div>
+                </div>
+
+                <!-- Options -->
+                <div class="space-y-3 mb-6">
+                    <label class="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5 cursor-pointer">
+                        <span class="text-gray-300 text-sm">Save to My Collection</span>
+                        <div class="w-10 h-6 bg-brand-accent rounded-full relative">
+                            <div class="w-4 h-4 bg-white rounded-full absolute top-1 right-1 shadow-sm"></div>
+                        </div>
+                    </label>
+                    <label class="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5 cursor-pointer">
+                        <span class="text-gray-300 text-sm">Include Elevation Data</span>
+                        <div class="w-10 h-6 bg-brand-accent rounded-full relative">
+                            <div class="w-4 h-4 bg-white rounded-full absolute top-1 right-1 shadow-sm"></div>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Confirm Button -->
+                <button class="w-full bg-brand-accent hover:bg-orange-600 text-brand-dark py-3.5 rounded-xl text-sm font-bold shadow-lg shadow-orange-500/20 transition-colors">
+                    Download GPX
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

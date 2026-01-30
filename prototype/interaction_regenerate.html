@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoStop - Regenerate Feedback</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0F172A',
+                            accent: '#F59E0B',
+                            success: '#10B981',
+                            surface: '#1E293B'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f3f4f6;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+        }
+        .device-frame {
+            width: 375px;
+            height: 812px;
+            background: #0F172A;
+            border: 12px solid #1f2937;
+            border-radius: 40px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .content {
+            height: 100%;
+            position: relative;
+        }
+        .map-layer {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url('https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');
+            background-size: cover;
+            background-position: center;
+            filter: brightness(0.4) blur(2px); /* Blurred background to focus on modal */
+        }
+        .modal-overlay {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: #1E293B;
+            border-radius: 24px 24px 0 0;
+            padding: 24px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="device-frame">
+        <div class="content">
+            <div class="map-layer"></div>
+            
+            <!-- Modal -->
+            <div class="modal-overlay">
+                <div class="w-10 h-1 bg-white/20 rounded-full mx-auto mb-6"></div>
+                
+                <h3 class="text-white text-lg font-bold mb-2">Not quite right?</h3>
+                <p class="text-gray-400 text-sm mb-6">Tell us what to adjust for the next attempt.</p>
+                
+                <!-- Quick Options Grid -->
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <button class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 text-left transition-colors group">
+                        <i class="fas fa-route text-brand-accent mb-2"></i>
+                        <div class="text-white text-sm font-medium">Too Far</div>
+                    </button>
+                    <button class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 text-left transition-colors group">
+                        <i class="fas fa-mountain text-brand-accent mb-2"></i>
+                        <div class="text-white text-sm font-medium">Too Hilly</div>
+                    </button>
+                    <button class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 text-left transition-colors group">
+                        <i class="fas fa-traffic-light text-brand-accent mb-2"></i>
+                        <div class="text-white text-sm font-medium">Too Risky</div>
+                    </button>
+                    <button class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 text-left transition-colors group">
+                        <i class="fas fa-map-marker-alt text-brand-accent mb-2"></i>
+                        <div class="text-white text-sm font-medium">Change Area</div>
+                    </button>
+                </div>
+
+                <!-- Custom Input -->
+                <div class="bg-black/20 rounded-xl p-3 border border-white/5 flex items-center gap-3 mb-6">
+                    <input type="text" placeholder="Or type specifically (e.g. Avoid the river)" 
+                           class="bg-transparent text-white text-sm w-full focus:outline-none placeholder-gray-500">
+                </div>
+
+                <!-- Action Button -->
+                <button class="w-full bg-brand-accent hover:bg-orange-600 text-brand-dark py-3.5 rounded-xl text-sm font-bold shadow-lg shadow-orange-500/20 transition-colors">
+                    Try Again
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

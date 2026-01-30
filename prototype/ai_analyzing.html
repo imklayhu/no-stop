@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoStop - Analyzing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0F172A',
+                            accent: '#F59E0B',
+                            success: '#10B981',
+                            surface: '#1E293B'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'spin-slow': 'spin 3s linear infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f3f4f6;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+        }
+        .device-frame {
+            width: 375px;
+            height: 812px;
+            background: #0F172A;
+            border: 12px solid #1f2937;
+            border-radius: 40px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            position: relative;
+        }
+        .radar-scan {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            border: 1px solid rgba(245, 158, 11, 0.1);
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.05) 0%, transparent 70%);
+        }
+        .radar-scan::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, transparent 0deg, rgba(245, 158, 11, 0.2) 60deg, transparent 60deg);
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="device-frame">
+        <div class="bg-grid"></div>
+        
+        <div class="content text-center z-10">
+            <!-- Radar Animation -->
+            <div class="radar-scan mb-8"></div>
+            
+            <!-- Central Icon -->
+            <div class="relative z-20 w-16 h-16 bg-brand-surface rounded-full flex items-center justify-center border border-brand-accent shadow-[0_0_30px_rgba(245,158,11,0.3)] mb-8">
+                <i class="fas fa-brain text-brand-accent text-2xl animate-pulse"></i>
+            </div>
+
+            <!-- Status Text -->
+            <h2 class="text-white text-xl font-bold mb-2">Analyzing Intent...</h2>
+            <p class="text-gray-400 text-sm mb-8">"Quiet 40km loop"</p>
+
+            <!-- Analysis Steps -->
+            <div class="w-full max-w-xs space-y-4 text-left">
+                <!-- Step 1: Done -->
+                <div class="flex items-center gap-3">
+                    <div class="w-5 h-5 rounded-full bg-brand-success/20 flex items-center justify-center">
+                        <i class="fas fa-check text-[10px] text-brand-success"></i>
+                    </div>
+                    <span class="text-xs text-gray-300">Parsed: Distance 40km, Flat</span>
+                </div>
+                
+                <!-- Step 2: Active -->
+                <div class="flex items-center gap-3">
+                    <div class="w-5 h-5 rounded-full border border-brand-accent/50 border-t-brand-accent animate-spin"></div>
+                    <span class="text-xs text-white font-medium">Scanning for Night Markets...</span>
+                </div>
+
+                <!-- Step 3: Pending -->
+                <div class="flex items-center gap-3 opacity-50">
+                    <div class="w-5 h-5 rounded-full border border-white/10"></div>
+                    <span class="text-xs text-gray-500">Calculating Safety Score</span>
+                </div>
+            </div>
+
+            <!-- Cancel Button -->
+            <button class="absolute bottom-12 text-gray-500 text-xs hover:text-white transition-colors">
+                Cancel
+            </button>
+        </div>
+    </div>
+</body>
+</html>

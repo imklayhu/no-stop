@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoStop - Success</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0F172A',
+                            accent: '#F59E0B',
+                            success: '#10B981',
+                            surface: '#1E293B'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f3f4f6;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+        }
+        .device-frame {
+            width: 375px;
+            height: 812px;
+            background: #0F172A;
+            border: 12px solid #1f2937;
+            border-radius: 40px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 32px;
+            background: radial-gradient(circle at center, #1E293B 0%, #0F172A 100%);
+        }
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(16, 185, 129, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            animation: scaleUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .success-icon i {
+            color: #10B981;
+            font-size: 32px;
+        }
+        @keyframes scaleUp {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="device-frame">
+        <div class="content">
+            <div class="success-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            
+            <h2 class="text-white text-2xl font-bold mb-2">Ready to Ride!</h2>
+            <p class="text-gray-400 text-sm mb-8 px-4">
+                Your GPX file has been downloaded successfully.
+            </p>
+
+            <div class="w-full space-y-3">
+                <button class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white py-4 rounded-xl flex items-center justify-between px-4 group transition-all">
+                    <div class="flex items-center gap-3">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Garmin_logo.svg/2560px-Garmin_logo.svg.png" class="h-4 opacity-80 group-hover:opacity-100 transition-opacity invert" alt="Garmin">
+                    </div>
+                    <i class="fas fa-chevron-right text-xs text-gray-500 group-hover:text-white transition-colors"></i>
+                </button>
+                
+                <button class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white py-4 rounded-xl flex items-center justify-between px-4 group transition-all">
+                    <div class="flex items-center gap-3">
+                        <span class="font-bold tracking-tight">STRAVA</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-xs text-gray-500 group-hover:text-white transition-colors"></i>
+                </button>
+            </div>
+
+            <button class="mt-12 text-gray-500 text-sm hover:text-white transition-colors">
+                Back to Home
+            </button>
+        </div>
+    </div>
+</body>
+</html>

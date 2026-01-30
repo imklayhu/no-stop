@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoStop - Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0F172A',
+                            accent: '#F59E0B',
+                            success: '#10B981',
+                            surface: '#1E293B'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f3f4f6;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+        }
+        .device-frame {
+            width: 375px;
+            height: 812px;
+            background: #0F172A;
+            border: 12px solid #1f2937;
+            border-radius: 40px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .content {
+            height: 100%;
+            overflow-y: auto;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            background: #0F172A;
+        }
+        .content::-webkit-scrollbar {
+            display: none;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(30, 41, 59, 0.3) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="device-frame">
+        <div class="content px-6 pt-12 pb-24">
+            
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-8">
+                <button class="text-white"><i class="fas fa-arrow-left"></i></button>
+                <button class="text-white"><i class="fas fa-cog"></i></button>
+            </div>
+
+            <!-- Profile Info -->
+            <div class="flex flex-col items-center mb-10">
+                <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-brand-accent to-orange-600 p-[2px] mb-4">
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" 
+                         class="w-full h-full rounded-full object-cover border-2 border-[#0F172A]">
+                </div>
+                <h2 class="text-white text-xl font-bold">Alex Rider</h2>
+                <p class="text-gray-400 text-xs mt-1">Serious Cyclist • Night Owl</p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-3 gap-3 mb-10">
+                <div class="stat-card rounded-2xl p-3 text-center">
+                    <div class="text-brand-accent text-lg font-bold">12</div>
+                    <div class="text-[10px] text-gray-500 uppercase tracking-wide">Routes</div>
+                </div>
+                <div class="stat-card rounded-2xl p-3 text-center">
+                    <div class="text-brand-accent text-lg font-bold">480</div>
+                    <div class="text-[10px] text-gray-500 uppercase tracking-wide">KM Planned</div>
+                </div>
+                <div class="stat-card rounded-2xl p-3 text-center">
+                    <div class="text-brand-accent text-lg font-bold">4.8</div>
+                    <div class="text-[10px] text-gray-500 uppercase tracking-wide">Avg Safety</div>
+                </div>
+            </div>
+
+            <!-- History Section -->
+            <h3 class="text-white text-sm font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-history text-brand-accent text-xs"></i> Recent Plans
+            </h3>
+
+            <div class="space-y-4">
+                
+                <!-- History Item 1 -->
+                <div class="bg-brand-surface rounded-2xl p-4 border border-white/5 group active:scale-[0.98] transition-transform">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h4 class="text-white text-sm font-bold">Riverside Night Loop</h4>
+                            <div class="text-xs text-gray-500 mt-0.5">Oct 24 • 20:00</div>
+                        </div>
+                        <div class="bg-brand-accent/10 text-brand-accent text-[10px] px-2 py-1 rounded font-medium">
+                            30km
+                        </div>
+                    </div>
+                    <!-- AI Snippet -->
+                    <div class="flex gap-3 items-start bg-black/20 p-2.5 rounded-lg border border-white/5">
+                        <i class="fas fa-quote-left text-gray-600 text-[10px] mt-0.5"></i>
+                        <p class="text-gray-400 text-xs italic leading-relaxed">
+                            Perfect for recovery. Avoided the busy night market. 90% bike lane.
+                        </p>
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <button class="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 text-xs py-2 rounded-lg transition-colors">
+                            View
+                        </button>
+                        <button class="flex-1 bg-white/5 hover:bg-white/10 text-brand-accent text-xs py-2 rounded-lg transition-colors">
+                            Re-Export
+                        </button>
+                    </div>
+                </div>
+
+                <!-- History Item 2 -->
+                <div class="bg-brand-surface rounded-2xl p-4 border border-white/5 group active:scale-[0.98] transition-transform">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h4 class="text-white text-sm font-bold">Century Park Intervals</h4>
+                            <div class="text-xs text-gray-500 mt-0.5">Oct 20 • 06:30</div>
+                        </div>
+                        <div class="bg-brand-accent/10 text-brand-accent text-[10px] px-2 py-1 rounded font-medium">
+                            45km
+                        </div>
+                    </div>
+                    <!-- AI Snippet -->
+                    <div class="flex gap-3 items-start bg-black/20 p-2.5 rounded-lg border border-white/5">
+                        <i class="fas fa-quote-left text-gray-600 text-[10px] mt-0.5"></i>
+                        <p class="text-gray-400 text-xs italic leading-relaxed">
+                            Designed for speed. Zero traffic lights on the main loop.
+                        </p>
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <button class="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 text-xs py-2 rounded-lg transition-colors">
+                            View
+                        </button>
+                        <button class="flex-1 bg-white/5 hover:bg-white/10 text-brand-accent text-xs py-2 rounded-lg transition-colors">
+                            Re-Export
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</body>
+</html>
